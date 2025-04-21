@@ -7,4 +7,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Automata\" />
+    <Folder Include="Utils\" />
+    <Folder Include="Service\" />
+    <Folder Include="table-driven\" />
+  </ItemGroup>
+
 </Project>
