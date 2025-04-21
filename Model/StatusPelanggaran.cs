@@ -8,9 +8,9 @@ namespace Tubes_Tahap1_KPL_kelompok3.Model
 {
     public enum StatusPelanggaran
     {
-        Dilaporkan,
-        Disetujui,
-        DiberiSanksi,
-        Selesai
+        DILAPORKAN, 
+        DISETUJUI, 
+        DIBERI_SANKSI, 
+        SELESAI
     }
 }
