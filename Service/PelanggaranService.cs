@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Tubes_Tahap1_KPL_kelompok3.Automata;
 using Tubes_Tahap1_KPL_kelompok3.Model;
 using Tubes_Tahap1_KPL_kelompok3.table_driven;
@@ -11,14 +8,20 @@ namespace Tubes_Tahap1_KPL_kelompok3.Service
 {
     public class PelanggaranService
     {
-        
         public void TambahPelanggaran(Siswa siswa, Pelanggaran pelanggaran)
         {
-            
+            // Defensive Programming: Validasi objek agar tidak null
+            if (siswa == null)
+                throw new ArgumentNullException(nameof(siswa), "Objek siswa tidak boleh null.");
+
+            if (pelanggaran == null)
+                throw new ArgumentNullException(nameof(pelanggaran), "Objek pelanggaran tidak boleh null.");
+
+            // Menambahkan pelanggaran ke riwayat siswa
             siswa.RiwayatPelanggaran.Add(pelanggaran);
             siswa.TotalPoin += pelanggaran.Poin;
 
-            
+            // Menentukan sanksi berdasarkan total poin
             int totalPoin = siswa.TotalPoin;
             string? sanksi = null;
 
@@ -35,31 +38,36 @@ namespace Tubes_Tahap1_KPL_kelompok3.Service
                 sanksi = "Peringatan Lisan";
             }
 
-            
+            // Memberikan notifikasi jika ada sanksi
             if (!string.IsNullOrEmpty(sanksi))
             {
                 Console.WriteLine($"[NOTIF] {siswa.Nama} menerima sanksi: {sanksi}");
             }
         }
 
-        
         public bool UbahStatusPelanggaran(Pelanggaran pelanggaran, Trigger trigger)
         {
-            
+            // Validasi objek pelanggaran agar tidak null
+            if (pelanggaran == null)
+                throw new ArgumentNullException(nameof(pelanggaran), "Objek pelanggaran tidak boleh null.");
+
             var sm = new PelanggaranStateMachine();
-            sm.currentState = pelanggaran.Status;
 
-            
-            sm.activate(trigger);
+            // Pastikan mesin status memulai dari status pelanggaran saat ini
+            sm.Activate(trigger);
 
-            
-            if (sm.currentState != pelanggaran.Status)
+            // Jika status berubah, update pelanggaran
+            if (sm.CurrentState != pelanggaran.Status)
             {
-                pelanggaran.Status = sm.currentState; 
+                pelanggaran.Status = sm.CurrentState;
                 return true;
             }
+            else
+            {
+                Console.WriteLine($"[INFO] Status pelanggaran '{pelanggaran.Jenis}' tidak berubah.");
+            }
 
-            return false; 
+            return false;
         }
     }
 }
