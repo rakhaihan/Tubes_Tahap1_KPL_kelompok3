@@ -17,35 +17,62 @@ namespace Tubes_Tahap1_KPL_kelompok3.Automata
 
             public Transisi(StatusPelanggaran prevState, StatusPelanggaran nextState, Trigger trigger)
             {
+                if (!Enum.IsDefined(typeof(StatusPelanggaran), prevState) ||
+                    !Enum.IsDefined(typeof(StatusPelanggaran), nextState) ||
+                    !Enum.IsDefined(typeof(Trigger), trigger))
+                {
+                    throw new ArgumentException("Nilai status atau trigger tidak valid.");
+                }
+
                 this.prevState = prevState;
                 this.nextState = nextState;
                 this.trigger = trigger;
             }
         }
 
-        Transisi[] transitions =
+        private Transisi[] transitions =
         {
             new Transisi(StatusPelanggaran.DILAPORKAN, StatusPelanggaran.DISETUJUI, Trigger.SETUJUI),
             new Transisi(StatusPelanggaran.DISETUJUI, StatusPelanggaran.DIBERI_SANKSI, Trigger.BERI_SANKSI),
             new Transisi(StatusPelanggaran.DIBERI_SANKSI, StatusPelanggaran.SELESAI, Trigger.SELESAIKAN)
         };
 
-        public StatusPelanggaran currentState = StatusPelanggaran.DILAPORKAN;
+        private StatusPelanggaran currentState = StatusPelanggaran.DILAPORKAN;
 
-        public StatusPelanggaran getNextState(StatusPelanggaran prevState, Trigger trigger)
+        public StatusPelanggaran CurrentState
         {
+            get => currentState;
+            private set
+            {
+                if (!Enum.IsDefined(typeof(StatusPelanggaran), value))
+                {
+                    throw new ArgumentException("Status tidak valid.");
+                }
+                currentState = value;
+            }
+        }
+
+        public StatusPelanggaran GetNextState(StatusPelanggaran prevState, Trigger trigger)
+        {
+            if (!Enum.IsDefined(typeof(StatusPelanggaran), prevState) || !Enum.IsDefined(typeof(Trigger), trigger))
+            {
+                throw new ArgumentException("PrevState atau trigger tidak valid.");
+            }
+
             foreach (var t in transitions)
             {
                 if (t.prevState == prevState && t.trigger == trigger)
+                {
                     return t.nextState;
+                }
             }
 
-            return prevState;
+            throw new InvalidOperationException($"Tidak ada transisi yang cocok untuk {prevState} dengan trigger {trigger}");
         }
 
-        public void activate(Trigger trigger)
+        public void Activate(Trigger trigger)
         {
-            currentState = getNextState(currentState, trigger);
+            CurrentState = GetNextState(CurrentState, trigger);
         }
     }
 }

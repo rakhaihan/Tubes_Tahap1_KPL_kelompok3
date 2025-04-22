@@ -8,21 +8,27 @@ namespace Tubes_Tahap1_KPL_kelompok3.table_driven
 {
     public static class TabelPelanggaran
     {
-        public static JenisPelanggaran[] Daftar = new JenisPelanggaran[]
+        public static readonly Dictionary<string, JenisPelanggaran> Daftar = new Dictionary<string, JenisPelanggaran>
         {
-        new JenisPelanggaran("Tidak Membawa Buku", LevelPelanggaran.RINGAN, 5),
-        new JenisPelanggaran("Terlambat Masuk", LevelPelanggaran.SEDANG, 10),
-        new JenisPelanggaran("Merokok", LevelPelanggaran.BERAT, 20)
+            { "Tidak Membawa Buku", new JenisPelanggaran("Tidak Membawa Buku", LevelPelanggaran.RINGAN, 5) },
+            { "Terlambat Masuk", new JenisPelanggaran("Terlambat Masuk", LevelPelanggaran.SEDANG, 10) },
+            { "Merokok", new JenisPelanggaran("Merokok", LevelPelanggaran.BERAT, 20) }
         };
 
+        // Pencarian lebih cepat dengan Dictionary
         public static int GetPoin(string nama)
         {
-            foreach (var jenis in Daftar)
+            if (string.IsNullOrWhiteSpace(nama))
             {
-                if (jenis.Nama == nama)
-                    return jenis.Poin;
+                throw new ArgumentException("Nama pelanggaran tidak boleh kosong atau null.");
             }
-            return 0;
+
+            if (!Daftar.ContainsKey(nama))
+            {
+                throw new KeyNotFoundException($"Pelanggaran '{nama}' tidak ditemukan.");
+            }
+
+            return Daftar[nama].Poin;
         }
     }
 }
