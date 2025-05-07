@@ -69,5 +69,46 @@ namespace Tubes_Tahap1_KPL_kelompok3.Service
 
             return false;
         }
+
+        public void TampilkanSemuaPelanggaran(SiswaService siswaService)
+        {
+            var semuaSiswa = siswaService.GetType()
+                .GetField("_daftarSiswa", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.GetValue(siswaService) as List<Siswa>;
+
+            if (semuaSiswa == null || semuaSiswa.Count == 0)
+            {
+                Console.WriteLine("Belum ada siswa dalam sistem.");
+                return;
+            }
+
+            bool adaPelanggaran = false;
+
+            foreach (var siswa in semuaSiswa)
+            {
+                if (siswa.RiwayatPelanggaran.Count == 0)
+                    continue;
+
+                adaPelanggaran = true;
+
+                Console.WriteLine($"\nNama Siswa: {siswa.Nama} | Kelas: {siswa.Kelas} | Total Poin: {siswa.TotalPoin}");
+                Console.WriteLine("--------------------------------------------------");
+
+                foreach (var pel in siswa.RiwayatPelanggaran)
+                {
+                    Console.WriteLine($"- Tanggal   : {pel.Tanggal.ToShortDateString()}");
+                    Console.WriteLine($"  Jenis     : {pel.Jenis}");
+                    Console.WriteLine($"  Poin      : {pel.Poin}");
+                    Console.WriteLine($"  Status    : {pel.Status}");
+                    Console.WriteLine();
+                }
+            }
+
+            if (!adaPelanggaran)
+            {
+                Console.WriteLine("Belum ada pelanggaran yang tercatat.");
+            }
+        }
+
     }
 }
