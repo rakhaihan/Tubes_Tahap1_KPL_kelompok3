@@ -1,109 +1,122 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using PoinSiswa.Library.Model;
-using PoinSiswa.Library.Service;
-using PoinSiswa.Library.Configuration;
-using PoinSiswa.Library.TableDriven;
-using PoinSiswa.Library.Automata;
-using PoinSiswa.Library.Components;
+using Tubes_Tahap1_KPL_kelompok3.Model;
+using Tubes_Tahap1_KPL_kelompok3.Service;
+using Tubes_Tahap1_KPL_kelompok3.table_driven;
+using Tubes_Tahap1_KPL_kelompok3.Automata;
+using Tubes_Tahap1_KPL_kelompok3.Utils;
+using Tubes_Tahap1_KPL_kelompok3.Components;
+using Tubes_Tahap1_KPL_kelompok3.Configuration;
 
-namespace PoinSiswa.App
+namespace Tubes_Tahap1_KPL_kelompok3
 {
     class Program
     {
-        static SiswaService siswaService = new SiswaService();
-        static PelanggaranService pelanggaranService = new PelanggaranService();
-        static ConfigManager configManager = new ConfigManager();
-
         static void Main(string[] args)
         {
-            while (true)
+            var configManager = new ConfigManager();
+            var config = configManager.Config;
+
+            var siswaService = new SiswaService();
+            var pelanggaranService = new PelanggaranService();
+            bool running = true;
+
+            while (running)
             {
-                Console.Clear();
-                Console.WriteLine("=== SISTEM POIN SISWA ===");
+                Console.WriteLine("\n=== MENU UTAMA ===");
                 Console.WriteLine("1. Tambah Siswa");
                 Console.WriteLine("2. Lihat Semua Siswa");
                 Console.WriteLine("3. Tambah Pelanggaran");
-                Console.WriteLine("4. Lihat Riwayat Pelanggaran");
-                Console.WriteLine("5. Keluar");
-                Console.Write("Pilih menu: ");
+                Console.WriteLine("4. Lihat Pelanggaran Siswa");
+                Console.WriteLine("5. Ubah Status Pelanggaran");
+                Console.WriteLine("6. Keluar");
+                Console.Write("Pilih menu (1-6): ");
+
                 string pilihan = Console.ReadLine();
 
                 switch (pilihan)
                 {
                     case "1":
-                        TambahSiswa();
+                        TambahSiswa(siswaService);
                         break;
                     case "2":
-                        LihatSemuaSiswa();
+                        TampilkanSemuaSiswa(siswaService);
                         break;
                     case "3":
-                        TambahPelanggaran();
+                        TambahPelanggaran(siswaService, pelanggaranService, config);
                         break;
                     case "4":
-                        LihatPelanggaran();
+                        LihatPelanggaranSiswa(siswaService);
                         break;
                     case "5":
-                        return;
+                        UbahStatusPelanggaran(siswaService, pelanggaranService);
+                        break;
+                    case "6":
+                        running = false;
+                        break;
                     default:
                         Console.WriteLine("Pilihan tidak valid.");
                         break;
                 }
-
-                Console.WriteLine("\nTekan Enter untuk kembali ke menu...");
-                Console.ReadLine();
             }
+
+            Console.WriteLine("Program selesai.");
         }
 
-        static void TambahSiswa()
+        static void TambahSiswa(SiswaService siswaService)
         {
-            Console.Write("Nama: ");
+            Console.Write("Nama siswa: ");
             string nama = Console.ReadLine();
             Console.Write("Kelas: ");
             string kelas = Console.ReadLine();
-            Siswa siswa = new Siswa { Id = Guid.NewGuid().GetHashCode(), Nama = nama, Kelas = kelas };
+
+            var siswa = new Siswa
+            {
+                Id = siswaService.GetSemua().Count + 1,
+                Nama = nama,
+                Kelas = kelas,
+                TotalPoin = 0
+            };
+
             siswaService.TambahSiswa(siswa);
             Console.WriteLine("Siswa berhasil ditambahkan.");
         }
 
-        static void LihatSemuaSiswa()
+        static void TampilkanSemuaSiswa(SiswaService siswaService)
         {
-            var semuaSiswa = siswaService.GetType()
-                .GetField("_daftarSiswa", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.GetValue(siswaService) as List<Siswa>;
+            Console.WriteLine("\n=== DAFTAR SISWA ===");
+            var siswaList = siswaService.GetSemua();
 
-            if (semuaSiswa == null || semuaSiswa.Count == 0)
-            {
-                Console.WriteLine("Belum ada data siswa.");
-                return;
-            }
-
-            TableRenderer.Render(semuaSiswa, new Dictionary<string, Func<Siswa, string>>
+            var columns = new Dictionary<string, Func<Siswa, string>>
             {
                 { "ID", s => s.Id.ToString() },
                 { "Nama", s => s.Nama },
                 { "Kelas", s => s.Kelas },
                 { "Total Poin", s => s.TotalPoin.ToString() }
-            });
+            };
+
+            TableRenderer.Render(siswaList, columns);
         }
 
-        static void TambahPelanggaran()
+        static void TambahPelanggaran(SiswaService siswaService, PelanggaranService pelanggaranService, AppConfig config)
         {
-            Console.Write("ID Siswa: ");
-            if (!int.TryParse(Console.ReadLine(), out int id))
-            {
-                Console.WriteLine("ID tidak valid.");
-                return;
-            }
+            Console.Write("Masukkan ID siswa: ");
+            int id = int.Parse(Console.ReadLine());
+            var siswa = siswaService.CariSiswa(id);
 
-            Siswa siswa = siswaService.CariSiswa(id);
             if (siswa == null)
             {
                 Console.WriteLine("Siswa tidak ditemukan.");
                 return;
             }
 
-            Console.Write("Jenis Pelanggaran (Misal: Merokok, Terlambat Masuk): ");
+            Console.WriteLine("\n=== DAFTAR PELANGGARAN ===");
+            foreach (var item in TabelPelanggaran.Daftar)
+            {
+                Console.WriteLine($"- {item.Key} ({item.Value.Poin} poin)");
+            }
+
+            Console.Write("Pilih jenis pelanggaran: ");
             string jenis = Console.ReadLine();
 
             try
@@ -111,8 +124,6 @@ namespace PoinSiswa.App
                 int poin = TabelPelanggaran.GetPoin(jenis);
                 var pelanggaran = new Pelanggaran
                 {
-                    Id = Guid.NewGuid().GetHashCode(),
-                    SiswaId = siswa.Id,
                     Jenis = jenis,
                     Poin = poin,
                     Tanggal = DateTime.Now,
@@ -120,6 +131,15 @@ namespace PoinSiswa.App
                 };
 
                 pelanggaranService.TambahPelanggaran(siswa, pelanggaran);
+
+                // Menggunakan konfigurasi batas poin untuk menentukan sanksi
+                if (siswa.TotalPoin >= config.BatasPoinSkorsing)
+                    Console.WriteLine("[NOTIF] Siswa diberikan sanksi: Skorsing");
+                else if (siswa.TotalPoin >= config.BatasPoinPanggilanOrangTua)
+                    Console.WriteLine("[NOTIF] Siswa harus dipanggil orang tua.");
+                else if (siswa.TotalPoin >= config.BatasPoinPeringatan)
+                    Console.WriteLine("[NOTIF] Siswa mendapat peringatan.");
+
                 Console.WriteLine("Pelanggaran berhasil ditambahkan.");
             }
             catch (Exception ex)
@@ -128,36 +148,82 @@ namespace PoinSiswa.App
             }
         }
 
-        static void LihatPelanggaran()
+        static void LihatPelanggaranSiswa(SiswaService siswaService)
         {
-            Console.Write("ID Siswa: ");
-            if (!int.TryParse(Console.ReadLine(), out int id))
-            {
-                Console.WriteLine("ID tidak valid.");
-                return;
-            }
+            Console.Write("Masukkan ID siswa: ");
+            int id = int.Parse(Console.ReadLine());
+            var siswa = siswaService.CariSiswa(id);
 
-            Siswa siswa = siswaService.CariSiswa(id);
             if (siswa == null)
             {
                 Console.WriteLine("Siswa tidak ditemukan.");
                 return;
             }
 
-            var riwayat = siswa.RiwayatPelanggaran;
-            if (riwayat.Count == 0)
+            Console.WriteLine($"\n=== RIWAYAT PELANGGARAN {siswa.Nama} ===");
+            var fieldGenerators = new Dictionary<string, Func<Pelanggaran, string>>
             {
-                Console.WriteLine("Tidak ada riwayat pelanggaran.");
+                { "Jenis", p => p.Jenis },
+                { "Poin", p => p.Poin.ToString() },
+                { "Tanggal", p => Formatter.FormatTanggal(p.Tanggal) },
+                { "Status", p => p.Status.ToString() }
+            };
+
+            foreach (var p in siswa.RiwayatPelanggaran)
+            {
+                FormBuilder.TampilkanForm(fieldGenerators, p);
+                Console.WriteLine();
+            }
+        }
+
+        static void UbahStatusPelanggaran(SiswaService siswaService, PelanggaranService pelanggaranService)
+        {
+            Console.Write("Masukkan ID siswa: ");
+            int id = int.Parse(Console.ReadLine());
+            var siswa = siswaService.CariSiswa(id);
+
+            if (siswa == null)
+            {
+                Console.WriteLine("Siswa tidak ditemukan.");
                 return;
             }
 
-            TableRenderer.Render(riwayat, new Dictionary<string, Func<Pelanggaran, string>>
+            Console.WriteLine("\n=== PILIH PELANGGARAN ===");
+            for (int i = 0; i < siswa.RiwayatPelanggaran.Count; i++)
             {
-                { "Tanggal", p => p.Tanggal.ToShortDateString() },
-                { "Jenis", p => p.Jenis },
-                { "Poin", p => p.Poin.ToString() },
-                { "Status", p => p.Status.ToString() }
-            });
+                Console.WriteLine($"{i + 1}. {siswa.RiwayatPelanggaran[i].Jenis} - {siswa.RiwayatPelanggaran[i].Status}");
+            }
+
+            Console.Write("Pilih pelanggaran (nomor): ");
+            int index = int.Parse(Console.ReadLine()) - 1;
+
+            if (index < 0 || index >= siswa.RiwayatPelanggaran.Count)
+            {
+                Console.WriteLine("Pilihan tidak valid.");
+                return;
+            }
+
+            Console.WriteLine("\n=== PILIH STATUS BARU ===");
+            Console.WriteLine("1. DISETUJUI");
+            Console.WriteLine("2. DIBERI SANKSI");
+            Console.WriteLine("3. SELESAI");
+
+            Console.Write("Pilih status (1-3): ");
+            string pilihanStatus = Console.ReadLine();
+            Trigger trigger = pilihanStatus switch
+            {
+                "1" => Trigger.SETUJUI,
+                "2" => Trigger.BERI_SANKSI, 
+                "3" => Trigger.SELESAIKAN,
+                _ => throw new ArgumentException("Pilihan tidak valid.")
+            };
+
+            bool statusBerubah = pelanggaranService.UbahStatusPelanggaran(siswa.RiwayatPelanggaran[index], trigger);
+            if (statusBerubah)
+            {
+                Console.WriteLine($"Status pelanggaran '{siswa.RiwayatPelanggaran[index].Jenis}' berubah menjadi {siswa.RiwayatPelanggaran[index].Status}.");
+            }
         }
+
     }
 }
