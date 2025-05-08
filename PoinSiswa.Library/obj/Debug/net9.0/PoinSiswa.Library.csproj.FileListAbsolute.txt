@@ -1,0 +1,5 @@
+D:\Tugas smstr 4\KPL\PoinSiswa.Library\obj\Debug\net9.0\PoinSiswa.Library.csproj.AssemblyReference.cache
+D:\Tugas smstr 4\KPL\PoinSiswa.Library\obj\Debug\net9.0\PoinSiswa.Library.GeneratedMSBuildEditorConfig.editorconfig
+D:\Tugas smstr 4\KPL\PoinSiswa.Library\obj\Debug\net9.0\PoinSiswa.Library.AssemblyInfoInputs.cache
+D:\Tugas smstr 4\KPL\PoinSiswa.Library\obj\Debug\net9.0\PoinSiswa.Library.AssemblyInfo.cs
+D:\Tugas smstr 4\KPL\PoinSiswa.Library\obj\Debug\net9.0\PoinSiswa.Library.csproj.CoreCompileInputs.cache
