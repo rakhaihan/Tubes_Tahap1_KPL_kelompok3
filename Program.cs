@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Tubes_Tahap1_KPL_kelompok3.Model;
 using Tubes_Tahap1_KPL_kelompok3.Service;
@@ -14,7 +14,6 @@ namespace Tubes_Tahap1_KPL_kelompok3
     {
         static void Main(string[] args)
         {
-            // Memuat konfigurasi
             var configManager = new ConfigManager();
             var config = configManager.Config;
 
@@ -214,7 +213,7 @@ namespace Tubes_Tahap1_KPL_kelompok3
             Trigger trigger = pilihanStatus switch
             {
                 "1" => Trigger.SETUJUI,
-                "2" => Trigger.BERI_SANKSI,
+                "2" => Trigger.BERI_SANKSI, 
                 "3" => Trigger.SELESAIKAN,
                 _ => throw new ArgumentException("Pilihan tidak valid.")
             };
